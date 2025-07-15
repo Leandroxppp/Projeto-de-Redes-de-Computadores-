@@ -37,9 +37,9 @@ Ferramentas: VS code
 
 | Nome       | E-mail |
 |------------|-----------|
-| Leandro Marcio Elias da Silva | lmes@ic.ufal.br |
-| Leandro Marcio Elias da Silva | lmes@ic.ufal.br |
-| Leandro Marcio Elias da Silva | lmes@ic.ufal.br   | 
+| Alexia Rodrigues Dos Santos Oliveira | arso@ic.ufal.br |
+| Barbara Rocha de Albuquerque | bra@ic.ufal.br |
+| Lara Nogueira Da Costa Ayres | lara.ayres@ip.ufal.br   | 
 | Leandro Marcio Elias da Silva | lmes@ic.ufal.br   |
 
 

@@ -4,8 +4,9 @@ Esse repositório contém um Projeto de Redes de Computadores construído em equ
 
 ## 🔧 Tecnologias usadas
 
-[] Linguagem: Python 
-[] Ferramentas: VS code
+Linguagem: Python 
+
+Ferramentas: VS code
 
 ## 📁 Estrutura do Projeto
 

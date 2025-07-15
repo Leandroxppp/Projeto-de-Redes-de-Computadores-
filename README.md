@@ -28,9 +28,13 @@ Ferramentas: VS code
 ## 📌 Status
 
 🚧 
+
 🚧 
+
 🚧 
+
 🚧 
+
 🚧 
 
 ## 📧 Contato

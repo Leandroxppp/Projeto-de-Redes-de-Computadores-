@@ -1,0 +1,50 @@
+import socket
+import threading
+from colorama import Fore, init
+
+init(autoreset=True)
+
+nickname = input("Digite seu apelido: ")
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+    client.connect(('127.0.0.1', 55555))
+except ConnectionRefusedError:
+    print(Fore.RED + "Não foi possível conectar ao servidor.")
+    exit()
+
+running = True
+
+def receive():
+    global running
+    while running:
+        try:
+            message = client.recv(1024).decode('utf-8')
+            if not message:
+                break
+            if message == 'NICK':
+                client.send(nickname.encode('utf-8'))
+            else:
+                print(Fore.GREEN + message)
+        except:
+            print(Fore.RED + "Você foi desconectado do servidor.")
+            client.close()
+            running = False
+            break
+
+def write():
+    global running
+    while running:
+        msg = input("")
+        if not msg.strip():
+            continue
+        if msg.lower() == "/quit":
+            client.close()
+            running = False
+            break
+        message = f"[{nickname}] {msg}"
+        client.send(message.encode('utf-8'))
+
+threading.Thread(target=receive, daemon=True).start()
+threading.Thread(target=write, daemon=True).start()

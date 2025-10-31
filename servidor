@@ -11,31 +11,84 @@ server.listen()
 clients = []
 nicknames = []
 
+
+# Controle de banimentos e censura
+
+PALAVRAS_PROIBIDAS = ["idiota", "burro", "imbecil", "burrao"]
+banidos = set()
+infracoes = {}  # conta quantas vezes cada usuário foi avisado
+
+def filtrar_mensagem(texto):
+    for palavra in PALAVRAS_PROIBIDAS:
+        if palavra.lower() in texto.lower():
+            texto = texto.lower().replace(palavra.lower(), "***")
+    return texto
+
+
+
 def broadcast(message):
-    for client in clients[:]: 
+    for client in clients[:]:
         try:
             client.send(message)
         except:
-            client.close()
             if client in clients:
                 clients.remove(client)
 
-def handle(client):
+
+def handle(client, nickname):
     while True:
         try:
             message = client.recv(1024)
-            if not message:
-                raise Exception("Cliente desconectado.")
-            broadcast(message)
+            texto = message.decode('utf-8')
+
+           
+            # verificação de banimento
+            if nickname in banidos:
+                client.send("Você foi banido do chat.\n".encode('utf-8'))
+                client.close()
+                return
+
+    
+            #  verificar se contém palavras proibidas
+            if any(p in texto.lower() for p in PALAVRAS_PROIBIDAS):
+                infracoes[nickname] = infracoes.get(nickname, 0) + 1
+
+                if infracoes[nickname] >= 3:
+                    banidos.add(nickname)
+                    client.send("🚫 Você foi banido por linguagem inapropriada.\n".encode('utf-8'))
+                    broadcast(f"\033[91m>> {nickname} foi banido do chat.\033[0m\n".encode('utf-8'))
+                    client.close()
+                    if client in clients:
+                        index = clients.index(client)
+                        clients.remove(client)
+                        nicknames.pop(index)
+                    return
+                else:
+                    aviso = f"⚠️ Aviso: Linguagem inapropriada ({infracoes[nickname]}/3)\n"
+                    client.send(aviso.encode('utf-8'))
+
+
+            # Filtra e envia mensagem
+           
+            texto_filtrado = filtrar_mensagem(texto)
+            broadcast(texto_filtrado.encode('utf-8'))
+
         except:
             if client in clients:
                 index = clients.index(client)
-                nickname = nicknames[index]
+                nick = nicknames[index]
+
                 clients.remove(client)
-                nicknames.remove(nickname)
-                broadcast(f">> {nickname} saiu do chat.\n".encode('utf-8'))
+                nicknames.remove(nick)
+
+                broadcast(f"\033[91m>> {nick} saiu do chat.\033[0m\n".encode('utf-8'))
+
+                if len(clients) == 0:
+                    print("Nenhum cliente conectado. Servidor aguardando novas conexões...")
+
             client.close()
             break
+
 
 def receive():
     print("Servidor rodando e aguardando conexões...")
@@ -45,6 +98,15 @@ def receive():
 
         client.send('NICK'.encode('utf-8'))
         nickname = client.recv(1024).decode('utf-8')
+
+        
+        # Impede entrada de banidos
+        
+        if nickname in banidos:
+            client.send("🚫 Você está banido e não pode entrar no chat.\n".encode('utf-8'))
+            client.close()
+            continue
+
         nicknames.append(nickname)
         clients.append(client)
 
@@ -52,7 +114,8 @@ def receive():
         broadcast(f">> {nickname} entrou no chat!\n".encode('utf-8'))
         client.send('Conectado ao servidor!\n'.encode('utf-8'))
 
-        thread = threading.Thread(target=handle, args=(client,), daemon=True)
+        thread = threading.Thread(target=handle, args=(client, nickname), daemon=True)
         thread.start()
+
 
 receive()

@@ -26,25 +26,47 @@ def receive():
             if message == 'NICK':
                 client.send(nickname.encode('utf-8'))
             else:
-                print(Fore.GREEN + message)
+              
+                if f">> {nickname} foi banido" in message.lower() or f">> {nickname} saiu do chat" in message.lower():
+                    continue
+
+
+                if "saiu do chat" in message.lower():
+                    print(Fore.RED + message)
+                elif "banido" in message.lower() or "🚫" in message:
+                    print(Fore.RED + message)
+                elif "aviso" in message.lower() or "⚠️" in message:
+                    print(Fore.YELLOW + message)
+                else:
+                    print(Fore.GREEN + message)
         except:
             print(Fore.RED + "Você foi desconectado do servidor.")
             client.close()
             running = False
             break
 
+
 def write():
     global running
     while running:
         msg = input("")
-        if not msg.strip():
-            continue
         if msg.lower() == "/quit":
+        
+            client.send(f"<< {nickname} saiu do chat >>".encode('utf-8'))
             client.close()
             running = False
             break
+
+        if not msg.strip():
+            continue
+
         message = f"[{nickname}] {msg}"
         client.send(message.encode('utf-8'))
 
+# Inicia as threads
 threading.Thread(target=receive, daemon=True).start()
 threading.Thread(target=write, daemon=True).start()
+
+# Mantém o programa ativo
+while running:
+    pass

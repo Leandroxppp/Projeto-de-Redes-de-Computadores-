@@ -4,12 +4,12 @@ import threading
 HOST = '127.0.0.1'
 PORT = 55555
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #cria um socket TCP
 server.bind((HOST, PORT))
-server.listen()
+server.listen() #começa a aceitar conexões
 
-clients = []
-nicknames = []
+clients = [] #guarda os sockets dos clientes conectados
+nicknames = [] #guarda os apelidos dos clientes conectados
 
 
 # Controle de banimentos e censura
@@ -18,7 +18,7 @@ PALAVRAS_PROIBIDAS = ["idiota", "burro", "imbecil", "burrao"]
 banidos = set()
 infracoes = {}  # conta quantas vezes cada usuário foi avisado
 
-def filtrar_mensagem(texto):
+def filtrar_mensagem(texto): #substitui palavras proibidas por ***
     for palavra in PALAVRAS_PROIBIDAS:
         if palavra.lower() in texto.lower():
             texto = texto.lower().replace(palavra.lower(), "***")
@@ -26,13 +26,13 @@ def filtrar_mensagem(texto):
 
 
 
-def broadcast(message):
+def broadcast(message): #envia mensagem para todos os clientes conectados
     for client in clients[:]:
         try:
             client.send(message)
         except:
             if client in clients:
-                clients.remove(client)
+                clients.remove(client) #remove cliente da lista se não puder enviar
 
 
 def handle(client, nickname):
@@ -51,29 +51,26 @@ def handle(client, nickname):
     
             #  verificar se contém palavras proibidas
             if any(p in texto.lower() for p in PALAVRAS_PROIBIDAS):
-                infracoes[nickname] = infracoes.get(nickname, 0) + 1
+                infracoes[nickname] = infracoes.get(nickname, 0) + 1 #incrementa o contador de infrações se houver palavra proibida
 
                 if infracoes[nickname] >= 3:
-                    banidos.add(nickname)
+                    banidos.add(nickname) #adiciona o usuário à lista de banidos
                     client.send("🚫 Você foi banido por linguagem inapropriada.\n".encode('utf-8'))
                     broadcast(f"\033[91m>> {nickname} foi banido do chat.\033[0m\n".encode('utf-8'))
-                    client.close()
+                    client.close() #fecha o socket
                     if client in clients:
                         index = clients.index(client)
                         clients.remove(client)
-                        nicknames.pop(index)
-                    return
+                        nicknames.pop(index) #remove apelido da lista
+                    return 
                 else:
                     aviso = f"⚠️ Aviso: Linguagem inapropriada ({infracoes[nickname]}/3)\n"
                     client.send(aviso.encode('utf-8'))
-
-
-            # Filtra e envia mensagem
            
-            texto_filtrado = filtrar_mensagem(texto)
-            broadcast(texto_filtrado.encode('utf-8'))
+            texto_filtrado = filtrar_mensagem(texto) #chama a função de filtro
+            broadcast(texto_filtrado.encode('utf-8')) #envia a mensagem filtrada para todos os clientes
 
-        except:
+        except: #se um socket for fechado ou der erro, remove o cliente da lista
             if client in clients:
                 index = clients.index(client)
                 nick = nicknames[index]
@@ -96,25 +93,25 @@ def receive():
         client, address = server.accept()
         print(f"Conectado com {str(address)}")
 
-        client.send('NICK'.encode('utf-8'))
-        nickname = client.recv(1024).decode('utf-8')
+        client.send('NICK'.encode('utf-8')) #envia o token NICk ao socket recem conectado
+        nickname = client.recv(1024).decode('utf-8') #recebe o apelido do cliente
 
         
         # Impede entrada de banidos
         
         if nickname in banidos:
             client.send("🚫 Você está banido e não pode entrar no chat.\n".encode('utf-8'))
-            client.close()
+            client.close() #fecha o socket
             continue
 
-        nicknames.append(nickname)
-        clients.append(client)
+        nicknames.append(nickname) #adiciona o apelido à lista
+        clients.append(client) #adiciona o socket do cliente à lista
 
         print(f"Apelido do cliente: {nickname}")
         broadcast(f">> {nickname} entrou no chat!\n".encode('utf-8'))
         client.send('Conectado ao servidor!\n'.encode('utf-8'))
 
-        thread = threading.Thread(target=handle, args=(client, nickname), daemon=True)
+        thread = threading.Thread(target=handle, args=(client, nickname), daemon=True) #cria uma thread para lidar com o cliente
         thread.start()
 
 

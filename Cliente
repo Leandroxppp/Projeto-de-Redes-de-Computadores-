@@ -6,31 +6,31 @@ init(autoreset=True)
 
 nickname = input("Digite seu apelido: ")
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #cria um socket TCP
 
 try:
-    client.connect(('127.0.0.1', 55555))
+    client.connect(('127.0.0.1', 55555))#tenta conectar o cliente ao servidor
 except ConnectionRefusedError:
     print(Fore.RED + "Não foi possível conectar ao servidor.")
     exit()
 
 running = True
 
-def receive():
+def receive(): #recebe mensagens do servidor e imprime na tela
     global running
     while running:
         try:
-            message = client.recv(1024).decode('utf-8')
+            message = client.recv(1024).decode('utf-8') #recebe mensagem do servidor    
             if not message:
                 break
-            if message == 'NICK':
-                client.send(nickname.encode('utf-8'))
+            if message == 'NICK': 
+                client.send(nickname.encode('utf-8')) #envia o apelido para o servidor
             else:
               
                 if f">> {nickname} foi banido" in message.lower() or f">> {nickname} saiu do chat" in message.lower():
                     continue
 
-
+                # formata a saída com cores
                 if "saiu do chat" in message.lower():
                     print(Fore.RED + message)
                 elif "banido" in message.lower() or "🚫" in message:
@@ -40,28 +40,27 @@ def receive():
                 else:
                     print(Fore.GREEN + message)
         except:
-            print(Fore.RED + "Você foi desconectado do servidor.")
+            print(Fore.RED + "Você foi desconectado do servidor.") #se o recv retornar vazio/erro, fecha o socket
             client.close()
             running = False
             break
 
 
-def write():
+def write(): #lê do teclado e envia mensagens para o servidor
     global running
     while running:
-        msg = input("")
+        msg = input("") #lê a mensagem do usuário
         if msg.lower() == "/quit":
-        
             client.send(f"<< {nickname} saiu do chat >>".encode('utf-8'))
             client.close()
             running = False
-            break
+            break #sai do loop e termina a thread se o usuário digitar /quit
 
-        if not msg.strip():
+        if not msg.strip(): #ignora mensagens vazias
             continue
 
-        message = f"[{nickname}] {msg}"
-        client.send(message.encode('utf-8'))
+        message = f"[{nickname}] {msg}" #formata a mensagem com o apelido naa frente
+        client.send(message.encode('utf-8')) #envia a mensagem para o servidor
 
 # Inicia as threads
 threading.Thread(target=receive, daemon=True).start()

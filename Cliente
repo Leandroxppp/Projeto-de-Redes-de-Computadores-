@@ -9,7 +9,7 @@ nickname = input("Digite seu apelido: ")
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #cria um socket TCP
 
 try:
-    client.connect(('127.0.0.1', 55555))#tenta conectar o cliente ao servidor
+    client.connect(('172.172.20.156', 55555))#tenta conectar o cliente ao servidor
 except ConnectionRefusedError:
     print(Fore.RED + "Não foi possível conectar ao servidor.")
     exit()
